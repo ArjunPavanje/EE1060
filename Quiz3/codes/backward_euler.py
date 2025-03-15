@@ -111,6 +111,7 @@ def reset(event):
     h_slider.reset()
 
 button.on_clicked(reset)
+ax.set_ylim(0, 20)
 ax.legend()
 plt.show()
 

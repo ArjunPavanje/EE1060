@@ -1,0 +1,83 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{url}
+
+\begin{document}
+
+\section*{Backward Euler Method}
+
+Given a differential equation:  
+$ \frac{dy}{dx} = f(y, x) $  
+and the initial value:  
+$ y(x_0) = y_0 $  
+
+The formula is:  
+\begin{align*}
+y_{n+1} &= y_n + h \cdot f(y_{n+1}, x_{n+1})
+\end{align*}
+
+\section*{Given Differential Equation}
+
+The given differential equation is:  
+\begin{align*}
+L \frac{di}{dt} + iR &= v(t)
+\end{align*}
+
+Rewriting it:  
+\begin{align*}
+\frac{di}{dt} &= \frac{v(t) - iR}{L}
+\end{align*}
+
+Using the backward Euler method:  
+\begin{align*}
+i_{n+1} &= i_n + h \left( \frac{v(t_{n+1}) - i_{n+1}R}{L} \right)
+\end{align*}
+
+\section*{On Simplifying}
+
+Simplify the equation as follows:  
+\begin{align*}
+i_{n+1} &= \frac{L i_n + h v(t_{n+1})}{L + hR} \\
+&= \frac{i_n \tau + h v(t_{n+1})}{\tau + h}
+\end{align*}
+
+where:  
+$ \tau = \frac{L}{R} $ is the time constant.
+
+
+\section*{Analysis of Time Constant ($\tau$) in Relation to System Period ($T$)}
+
+The time constant $\tau$ plays a critical role in determining the transient response of a system. Here, we analyze three cases: 
+$\tau \ll T$, $\tau \gg T$, and $\tau \approx T$, with respect to rise time ($t_r$) and settling time ($t_s$).
+
+\subsection*{Case 1: $\tau \ll T$ (Small Time Constant)}
+
+When the time constant is much smaller than the system period:
+\begin{align*}
+\tau \ll T
+\end{align*}
+
+The system responds very quickly to changes in input. The rise time ($t_r$) and settling time ($t_s$) are both short because the system reaches its steady-state value quickly. The extent of charging and discharging also depends on $\alpha$ value to some extent. For instance, if $\alpha$ value is very low, the inductor might not be charged fully.
+
+\subsection*{Case 2: $\tau \gg T$ (Large Time Constant)}
+
+When the time constant is much larger than the system period:
+\begin{align*}
+\tau \gg T
+\end{align*}
+
+The system responds very slowly to changes in input. Both rise time and settling time are significantly longer than in the first case. The inductor charges and discharges slowly, to the point where it appears to look like the response of an $RL$ circuit to DC input.
+
+\subsection*{Case 3: $\tau \approx T$ (Comparable Time Constant)}
+
+When the time constant is comparable to the system period:
+\begin{align*}
+\tau \approx T
+\end{align*}
+The inductor is charged partially and discharges partially in one half cycle. The next current in the inductor depends on $\alpha$ value (inductor might fully discharge if $ \alpha$ is suffeciently low, or it might end up having some net current in which case the inductor continues to get charged as time passes i.e. more cycles of square wave and eventually saturates) \newline \newline
+Plot:\newline
+\url{https://github.com/ArjunPavanje/EE1060/blob/main/Quiz3/codes/backward_euler.py}\newline
+Stability of numerical method: \newline
+\url{https://github.com/ArjunPavanje/EE1060/blob/main/Quiz3/codes/stepsize_variance.py} \newline
+\end{document}
+

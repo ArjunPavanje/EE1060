@@ -8,28 +8,28 @@ N = 10 # Number of periods to plot
 h = 0.01 # Step Size
 n = 10000
 
-def fourier_current(T, R, L, alpha, h, n_terms, t_values):
+def fourier_current(T, tau, L, alpha, h, n_terms, t_values):
     """Calculate current using Fourier series from equation 0.20 and 0.21"""
-    tau = L/R
+    R = L/tau  # Calculate R from tau and L
     w0 = 2*np.pi/T
     result = []
     
     for t in t_values:
         # First term (DC component)
-        current = (10*alpha/R) * (1 - np.exp(-R*t/L))
+        current = (10*alpha/R) * (1 - np.exp(-t/tau))
         
         # Sum for the sin(2παn) terms (equation 0.20)
         for n in range(1, int(n_terms+1)):
             term1 = (10/(n*np.pi)) * np.sin(2*np.pi*alpha*n)
             term2 = (R*np.cos(n*w0*t) + n*w0*L*np.sin(n*w0*t))/(R**2 + L**2*(n*w0)**2)
-            term3 = -R/(R**2 + L**2*(n*w0)**2) * np.exp(-R*t/L)
+            term3 = -R/(R**2 + L**2*(n*w0)**2) * np.exp(-t/tau)
             current += term1 * (term2 + term3)
         
         # Sum for the (1-cos(2παn)) terms (equation 0.21)
         for n in range(1, int(n_terms+1)):
             term1 = (10/(n*np.pi)) * (1 - np.cos(2*np.pi*alpha*n))
             term2 = (R*np.sin(n*w0*t) - L*n*w0*np.cos(n*w0*t))/(R**2 + L**2*(n*w0)**2)
-            term3 = (n*w0*L)/(R**2 + L**2*(n*w0)**2) * np.exp(-R*t/L)
+            term3 = (n*w0*L)/(R**2 + L**2*(n*w0)**2) * np.exp(-t/tau)
             current += term1 * (term2 + term3)
         
         result.append(current)
@@ -44,8 +44,9 @@ def square(t, alpha, T, amplitude=10):
     """Square wave function for numerical methods"""
     return amplitude if (t/T - np.floor(t/T)) < alpha else 0
 
-def backward_euler(T, R, L, alpha, h, t_values):
+def backward_euler(T, tau, L, alpha, h, t_values):
     """Backward Euler numerical method implementation"""
+    R = L/tau  # Calculate R from tau and L
     fe = []
     y = 0  # Initial current
     x = 0  # Initial time
@@ -57,28 +58,30 @@ def backward_euler(T, R, L, alpha, h, t_values):
     
     return fe
 
-def forward_euler(T, R, L, alpha, h, t_values):
+def forward_euler(T, tau, L, alpha, h, t_values):
     """Forward Euler numerical method implementation"""
+    R = L/tau  # Calculate R from tau and L
     fe = []
     y = 0  # Initial current
     x = 0  # Initial time
     
     for i in range(len(t_values)):
         fe.append(y)
-        y = y * (1 - (R*h/L)) + (h/L) * square(x, alpha, T)
+        y = y * (1 - (h/tau)) + (h/L) * square(x, alpha, T)
         x += h
     
     return fe
 
-def rk4(T, R, L, alpha, h, t_values):
+def rk4(T, tau, L, alpha, h, t_values):
     """Runge-Kutta 4th order method implementation"""
+    R = L/tau  # Calculate R from tau and L
     result = []
     y = 0  # Initial current
     x = 0  # Initial time
     
-    # Define the differential equation: di/dt = (v(t) - R*i)/L
+    # Define the differential equation: di/dt = (v(t) - R*i)/L = (v(t) - i/tau)/L
     def f(t, i):
-        return (square(t, alpha, T) - R*i)/L
+        return (square(t, alpha, T) - i/tau)/L
     
     for i in range(len(t_values)):
         result.append(y)
@@ -95,8 +98,8 @@ def rk4(T, R, L, alpha, h, t_values):
     return result
 
 alpha = 0.5 # duty ratio for input square wave
-R = 1 # resistance
 L = 1 # inductance
+tau = 1 # time constant L/R
 T = 1 # time period of input square wave
 plot_type = "All Numerical" # Default plot type
 
@@ -107,10 +110,10 @@ fig = plt.figure(figsize=(12, 8))
 ax = fig.add_axes([0.1, 0.35, 0.8, 0.55])
 
 # Initial plot - all numerical methods
-current = fourier_current(T, R, L, alpha, h, 20, t)
-be_current = backward_euler(T, R, L, alpha, h, t)
-fe_current = forward_euler(T, R, L, alpha, h, t)
-rk4_current = rk4(T, R, L, alpha, h, t)
+current = fourier_current(T, tau, L, alpha, h, 20, t)
+be_current = backward_euler(T, tau, L, alpha, h, t)
+fe_current = forward_euler(T, tau, L, alpha, h, t)
+rk4_current = rk4(T, tau, L, alpha, h, t)
 
 ax.plot(t, current, lw=2, label="Fourier Series")
 ax.plot(t, be_current, lw=2, linestyle='--', label="Backward Euler")
@@ -131,16 +134,16 @@ slider_bottom_start = 0.22
 
 axtime = fig.add_axes([slider_left, slider_bottom_start, slider_width, slider_height])
 axalpha = fig.add_axes([slider_left, slider_bottom_start - 0.04, slider_width, slider_height])
-axR = fig.add_axes([slider_left, slider_bottom_start - 0.08, slider_width, slider_height])
+axtau = fig.add_axes([slider_left, slider_bottom_start - 0.08, slider_width, slider_height])
 axL = fig.add_axes([slider_left, slider_bottom_start - 0.12, slider_width, slider_height])
 axh = fig.add_axes([slider_left, slider_bottom_start - 0.16, slider_width, slider_height])
 axn = fig.add_axes([slider_left, slider_bottom_start - 0.20, slider_width, slider_height])
 
 time_slider = Slider(
     ax=axtime,
-    label='Time Period',
+    label='Time Period T',
     valmin=0.1,
-    valmax=30,
+    valmax=50,
     valinit=T,
 )
 alpha_slider = Slider(
@@ -150,13 +153,13 @@ alpha_slider = Slider(
     valmax=0.99,
     valinit=alpha,
 )
-R_slider = Slider(
-    ax=axR,
-    label='Resistance R [Ω]',
-    valmin=0.1,
-    valmax=100,
-    valinit=R,
-    valstep=0.1
+tau_slider = Slider(
+    ax=axtau,
+    label='Time Constant τ = L/R [s]',
+    valmin=0.01,
+    valmax=10,
+    valinit=tau,
+    valstep=0.01
 )
 L_slider = Slider(
     ax=axL,
@@ -194,7 +197,7 @@ def plot_type_update(val):
 
 def update(val):
     T_val = time_slider.val
-    R_val = R_slider.val
+    tau_val = tau_slider.val
     L_val = L_slider.val
     alpha_val = alpha_slider.val
     h_val = h_slider.val
@@ -208,30 +211,30 @@ def update(val):
     ax.clear()
     
     if plot_type == "Fourier":
-        current = fourier_current(T_val, R_val, L_val, alpha_val, h_val, n_val, t)
+        current = fourier_current(T_val, tau_val, L_val, alpha_val, h_val, n_val, t)
         ax.plot(t, current, lw=2, label="Fourier Series")
         ax.set_ylabel('Current [A]')
         ax.set_title('Current Response - Fourier Series')
     elif plot_type == "Backward Euler":
-        be_current = backward_euler(T_val, R_val, L_val, alpha_val, h_val, t)
+        be_current = backward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
         ax.plot(t, be_current, lw=2, label="Backward Euler")
         ax.set_ylabel('Current [A]')
         ax.set_title('Current Response - Backward Euler Method')
     elif plot_type == "Forward Euler":
-        fe_current = forward_euler(T_val, R_val, L_val, alpha_val, h_val, t)
+        fe_current = forward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
         ax.plot(t, fe_current, lw=2, label="Forward Euler")
         ax.set_ylabel('Current [A]')
         ax.set_title('Current Response - Forward Euler Method')
     elif plot_type == "RK4":
-        rk4_current = rk4(T_val, R_val, L_val, alpha_val, h_val, t)
+        rk4_current = rk4(T_val, tau_val, L_val, alpha_val, h_val, t)
         ax.plot(t, rk4_current, lw=2, label="RK4")
         ax.set_ylabel('Current [A]')
         ax.set_title('Current Response - RK4 Method')
     elif plot_type == "All Numerical":
-        current = fourier_current(T_val, R_val, L_val, alpha_val, h_val, n_val, t)
-        be_current = backward_euler(T_val, R_val, L_val, alpha_val, h_val, t)
-        fe_current = forward_euler(T_val, R_val, L_val, alpha_val, h_val, t)
-        rk4_current = rk4(T_val, R_val, L_val, alpha_val, h_val, t)
+        current = fourier_current(T_val, tau_val, L_val, alpha_val, h_val, n_val, t)
+        be_current = backward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
+        fe_current = forward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
+        rk4_current = rk4(T_val, tau_val, L_val, alpha_val, h_val, t)
         ax.plot(t, current, lw=2, label="Fourier Series")
         ax.plot(t, be_current, lw=2, linestyle='--', label="Backward Euler")
         ax.plot(t, fe_current, lw=2, linestyle='-.', label="Forward Euler")
@@ -244,10 +247,10 @@ def update(val):
         ax.set_ylabel('Voltage [V]')
         ax.set_title('Input Square Wave Voltage V(t)')
     else:  # All
-        current = fourier_current(T_val, R_val, L_val, alpha_val, h_val, n_val, t)
-        be_current = backward_euler(T_val, R_val, L_val, alpha_val, h_val, t)
-        fe_current = forward_euler(T_val, R_val, L_val, alpha_val, h_val, t)
-        rk4_current = rk4(T_val, R_val, L_val, alpha_val, h_val, t)
+        current = fourier_current(T_val, tau_val, L_val, alpha_val, h_val, n_val, t)
+        be_current = backward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
+        fe_current = forward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
+        rk4_current = rk4(T_val, tau_val, L_val, alpha_val, h_val, t)
         voltage = square_wave(t, T_val, alpha_val)
         ax.plot(t, current, lw=2, label="Fourier Series")
         ax.plot(t, be_current, lw=2, linestyle='--', label="Backward Euler")
@@ -261,19 +264,19 @@ def update(val):
     ax.grid(True)
     ax.legend()
     
-    # Set reasonable y-limits
-    if plot_type == "Voltage":
-        ax.set_ylim(-1, 11)
-    else:
-        y_max = max(max(fourier_current(T_val, R_val, L_val, alpha_val, h_val, n_val, t)), 10) * 1.1
-        ax.set_ylim(0, y_max)
-    
+#    # Set fixed y-limits
+#    if plot_type == "Voltage":
+#        #ax.set_ylim(-1, 11)
+#    else:
+#        #ax.set_ylim(0, 20)
+    ax.relim()
+    ax.autoscale_view()
     fig.canvas.draw_idle()
 
 # Register the update function with each slider
 time_slider.on_changed(update)
 alpha_slider.on_changed(update)
-R_slider.on_changed(update)
+tau_slider.on_changed(update)
 L_slider.on_changed(update)
 h_slider.on_changed(update)
 n_slider.on_changed(update)
@@ -286,7 +289,7 @@ button = Button(resetax, 'Reset', hovercolor='0.975')
 def reset(event):
     time_slider.reset()
     alpha_slider.reset()
-    R_slider.reset()
+    tau_slider.reset()
     L_slider.reset()
     h_slider.reset()
     n_slider.reset()
@@ -298,7 +301,7 @@ def reset(event):
 button.on_clicked(reset)
 
 # Add text explaining the equation
-equation_text = "Using equations (0.20) and (0.21) from the image"
+equation_text = "Response of series RL circuit to square wave input"
 fig.text(0.5, 0.01, equation_text, ha='center', fontsize=10)
 
 plt.show()

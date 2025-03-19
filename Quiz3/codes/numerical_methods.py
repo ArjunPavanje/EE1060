@@ -4,10 +4,11 @@ import math
 from matplotlib.widgets import Button, Slider
 from matplotlib.widgets import RangeSlider
 
-N = 50 # Number of periods to plot
+N = 10 # Number of periods of square wave to plot
 h = 0.01 # Step Size
-n = 10000
+n = 10000 # Number of points to plot
 
+# Fourier Series
 def fourier_current(T, tau, L, alpha, h, n_terms, t_values):
     """Calculate current using Fourier series from equation 0.20 and 0.21"""
     R = L/tau  # Calculate R from tau and L

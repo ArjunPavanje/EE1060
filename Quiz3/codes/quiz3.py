@@ -4,7 +4,7 @@ import math
 from matplotlib.widgets import Button, Slider
 from matplotlib.widgets import RangeSlider
 
-N = 10 # Number of periods to plot
+N = 50 # Number of periods to plot
 h = 0.01 # Step Size
 n = 10000
 
@@ -143,7 +143,7 @@ time_slider = Slider(
     ax=axtime,
     label='Time Period T',
     valmin=0.1,
-    valmax=30,
+    valmax=50,
     valinit=T,
 )
 alpha_slider = Slider(
@@ -264,12 +264,13 @@ def update(val):
     ax.grid(True)
     ax.legend()
     
-    # Set fixed y-limits
-    if plot_type == "Voltage":
-        ax.set_ylim(-1, 11)
-    else:
-        ax.set_ylim(0, 20)
-    
+#    # Set fixed y-limits
+#    if plot_type == "Voltage":
+#        #ax.set_ylim(-1, 11)
+#    else:
+#        #ax.set_ylim(0, 20)
+    ax.relim()
+    ax.autoscale_view()
     fig.canvas.draw_idle()
 
 # Register the update function with each slider
@@ -300,7 +301,7 @@ def reset(event):
 button.on_clicked(reset)
 
 # Add text explaining the equation
-equation_text = "Using equations (0.20) and (0.21) from the image with τ = L/R"
+equation_text = "Response of series RL circuit to square wave input"
 fig.text(0.5, 0.01, equation_text, ha='center', fontsize=10)
 
 plt.show()

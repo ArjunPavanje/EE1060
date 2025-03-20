@@ -5,6 +5,8 @@ import math
 from matplotlib.widgets import Button, Slider
 from matplotlib.widgets import RangeSlider
 
+'''Plot of voltage across inductor obtained using various numerical methods'''
+
 N = 10 # Number of periods to plot
 h = 0.01 # Step Size
 n = 10000

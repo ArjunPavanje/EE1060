@@ -4,6 +4,8 @@ import math
 from matplotlib.widgets import Button, Slider
 from matplotlib.widgets import RangeSlider
 
+'''Plot of current across inductor obtained using various numerical methods '''
+
 N = 10 # Number of periods of square wave to plot
 h = 0.01 # Step Size
 n = 10000 # Number of points to plot

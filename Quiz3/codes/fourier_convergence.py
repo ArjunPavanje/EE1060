@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Button, Slider, RadioButtons
 
+'''Convergence of Fourier Series of input square wave'''
+
 # Parameters
 N = 10  # Number of periods to plot
 h = 0.01  # Step Size

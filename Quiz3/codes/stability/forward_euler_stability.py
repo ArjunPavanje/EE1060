@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Button, Slider
 
+'''Stability of Forward Euler method for various step sizes'''
+
 # Parameters
 N = 10  # Number of periods of square wave to plot
 T = 1  # Time period of input square wave

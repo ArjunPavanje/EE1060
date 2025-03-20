@@ -1,7 +1,8 @@
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Button, Slider
+
+'''Plot of how current through inductor obtained via fourier series varies when number of terms taken in the summation vary'''
 
 # Parameters
 N = 10  # Number of periods of square wave to plot

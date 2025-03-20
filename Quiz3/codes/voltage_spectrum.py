@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, RadioButtons
 
+'''Phase and Magnitude Spectrum of fourier coeffecients of input square wave'''
+
 # Defining the Fourier spectrum function
 def fourier_spectrum(n, alpha, omega_0, tau, L):
     # R is calculated from tau and L

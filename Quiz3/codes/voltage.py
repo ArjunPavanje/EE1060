@@ -1,16 +1,16 @@
+
 import matplotlib.pyplot as plt
 import numpy as np
 import math 
 from matplotlib.widgets import Button, Slider
 from matplotlib.widgets import RangeSlider
 
-N = 10 # Number of periods of square wave to plot
+N = 10 # Number of periods to plot
 h = 0.01 # Step Size
-n = 10000 # Number of points to plot
+n = 10000
 
-# Fourier Series
 def fourier_current(T, tau, L, alpha, h, n_terms, t_values):
-    """Calculate current using Fourier series from the expression in the report """
+    """Calculate current using Fourier series from equation 0.20 and 0.21"""
     R = L/tau  # Calculate R from tau and L
     w0 = 2*np.pi/T
     result = []
@@ -38,7 +38,7 @@ def fourier_current(T, tau, L, alpha, h, n_terms, t_values):
     return result
 
 def square_wave(t, T, alpha, amplitude=10):
-    """Generate square wave voltage with duty ratio alpha"""
+    """Generate square wave voltage with duty cycle alpha"""
     return amplitude * ((t/T - np.floor(t/T)) < alpha)
 
 def square(t, alpha, T, amplitude=10):
@@ -97,12 +97,18 @@ def rk4(T, tau, L, alpha, h, t_values):
         x += h
     
     return result
-
+    
+def inductor_voltage(current,L,h):
+    v_L=np.zeros_like(current)
+    for i in range(1,len(current)):
+        v_L[i]=L*(current[i]-current[i-1])/h
+    return v_L
+    
 alpha = 0.5 # duty ratio for input square wave
 L = 1 # inductance
 tau = 1 # time constant L/R
 T = 1 # time period of input square wave
-plot_type = "All Numerical" # Default plot type
+plot_type = "Fourier" # Default plot type
 
 t = np.linspace(0, N*T, int(N*T/h))
 
@@ -110,29 +116,16 @@ t = np.linspace(0, N*T, int(N*T/h))
 fig = plt.figure(figsize=(12, 8))
 ax = fig.add_axes([0.1, 0.35, 0.8, 0.55])
 
-
-
-
-
 # Initial plot - all numerical methods
-current = fourier_current(T, tau, L, alpha, h, 20, t)
-be_current = backward_euler(T, tau, L, alpha, h, t)
-fe_current = forward_euler(T, tau, L, alpha, h, t)
-rk4_current = rk4(T, tau, L, alpha, h, t)
+fe_current = fourier_current(T, tau, L, alpha, h, 20, t)
+v_L = inductor_voltage(fe_current, L, h)
 
-ax.plot(t, current, lw=2, label="Fourier Series")
-ax.plot(t, be_current, lw=2, linestyle='--', label="Backward Euler")
-ax.plot(t, fe_current, lw=2, linestyle='-.', label="Forward Euler")
-ax.plot(t, rk4_current, lw=2, linestyle=':', label="RK4")
-
+ax.plot(t, v_L, lw=2, label="Forward Euler - Inductor Voltage")
 ax.set_xlabel('Time [s]')
-ax.set_ylabel('Current [A]')
-ax.set_title('RL Circuit Response - Comparison of All Numerical Methods')
+ax.set_ylabel('Voltages')
+ax.set_title('RL Circuit Response - Fourier')
 ax.grid(True)
 ax.legend()
-
-
-# Below are all the plot seettings related to sliders and buttons
 
 # Make sliders to control parameters
 slider_width = 0.65
@@ -151,7 +144,7 @@ time_slider = Slider(
     ax=axtime,
     label='Time Period T',
     valmin=0.1,
-    valmax=50,
+    valmax=30,
     valinit=T,
 )
 alpha_slider = Slider(
@@ -196,7 +189,7 @@ n_slider = Slider(
 # Add radio buttons for plot type selection
 rax = fig.add_axes([0.025, 0.35, 0.15, 0.35])
 radio = plt.matplotlib.widgets.RadioButtons(
-    rax, ('Fourier', 'Backward Euler', 'Forward Euler', 'RK4', 'All Numerical', 'Voltage', 'All'), active=4)
+    rax, ('Fourier', 'Backward Euler', 'Forward Euler', 'RK4', 'All Numerical', 'Input', 'All'), active=0)
 
 def plot_type_update(val):
     global plot_type
@@ -211,74 +204,85 @@ def update(val):
     h_val = h_slider.val
     n_val = n_slider.val
     
-    # Update time array if h changed
+
     global t
-    t = np.linspace(0, N*T_val, int(N*T_val/h_val))
+    t = np.linspace(0, N*T_val, int(N*T_val/h_val))  # Update time array
     
-    # Clear previous plot
-    ax.clear()
-    
+    ax.clear()  # Clear previous plot
+
+    v_L = np.array([0])  # Ensure v_L is always initialized
+
     if plot_type == "Fourier":
         current = fourier_current(T_val, tau_val, L_val, alpha_val, h_val, n_val, t)
-        ax.plot(t, current, lw=2, label="Fourier Series")
-        ax.set_ylabel('Current [A]')
-        ax.set_title('Current Response - Fourier Series')
+        v_L = inductor_voltage(current, L_val, h_val)
+        ax.plot(t, v_L, lw=2, label="Fourier Series - Inductor Voltage")
+
     elif plot_type == "Backward Euler":
         be_current = backward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
-        ax.plot(t, be_current, lw=2, label="Backward Euler")
-        ax.set_ylabel('Current [A]')
-        ax.set_title('Current Response - Backward Euler Method')
+        v_L = inductor_voltage(be_current, L_val, h_val)
+        ax.plot(t, v_L, lw=2, label="Backward Euler - Inductor Voltage")
+
     elif plot_type == "Forward Euler":
         fe_current = forward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
-        ax.plot(t, fe_current, lw=2, label="Forward Euler")
-        ax.set_ylabel('Current [A]')
-        ax.set_title('Current Response - Forward Euler Method')
+        v_L = inductor_voltage(fe_current, L_val, h_val)
+        ax.plot(t, v_L, lw=2, label="Forward Euler - Inductor Voltage")
+
     elif plot_type == "RK4":
         rk4_current = rk4(T_val, tau_val, L_val, alpha_val, h_val, t)
-        ax.plot(t, rk4_current, lw=2, label="RK4")
-        ax.set_ylabel('Current [A]')
-        ax.set_title('Current Response - RK4 Method')
+        v_L = inductor_voltage(rk4_current, L_val, h_val)
+        ax.plot(t, v_L, lw=2, label="RK4 - Inductor Voltage")
+
+    elif plot_type == "Input":
+        voltage = square_wave(t, T_val, alpha_val)
+        ax.plot(t, voltage, lw=2, label="Input voltage V(t)")
+        ax.set_ylabel('Input Voltage [V]')
+        ax.set_title('Input Square Wave Voltage V(t)')
+        v_L = voltage  # Assign a placeholder value to v_L
+        
     elif plot_type == "All Numerical":
         current = fourier_current(T_val, tau_val, L_val, alpha_val, h_val, n_val, t)
+        v_L = inductor_voltage(current, L_val, h_val)
         be_current = backward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
+        be_v_L = inductor_voltage(be_current, L_val, h_val)
         fe_current = forward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
+        fe_v_L = inductor_voltage(fe_current, L_val, h_val)
         rk4_current = rk4(T_val, tau_val, L_val, alpha_val, h_val, t)
-        ax.plot(t, current, lw=2, label="Fourier Series")
-        ax.plot(t, be_current, lw=2, linestyle='--', label="Backward Euler")
-        ax.plot(t, fe_current, lw=2, linestyle='-.', label="Forward Euler")
-        ax.plot(t, rk4_current, lw=2, linestyle=':', label="RK4")
-        ax.set_ylabel('Current [A]')
-        ax.set_title('Current Response - Comparison of All Numerical Methods')
-    elif plot_type == "Voltage":
-        voltage = square_wave(t, T_val, alpha_val)
-        ax.plot(t, voltage, lw=2, label="Voltage V(t)")
-        ax.set_ylabel('Voltage [V]')
-        ax.set_title('Input Square Wave Voltage V(t)')
-    else:  # All
+        rk4_v_L = inductor_voltage(rk4_current, L_val, h_val)
+     
+        ax.plot(t, v_L, lw=2, label="Fourier Series - Inductor Voltage")
+        ax.plot(t, be_v_L, lw=2, label="Backward Euler - Inductor Voltage")
+        ax.plot(t, fe_v_L, lw=2, label="Forward Euler - Inductor Voltage")
+        ax.plot(t, rk4_v_L, lw=2, label="RK4 - Inductor Voltage")
+
+    else:  # All (Voltage + Current)
         current = fourier_current(T_val, tau_val, L_val, alpha_val, h_val, n_val, t)
+        v_L = inductor_voltage(current, L_val, h_val)
         be_current = backward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
+        be_v_L = inductor_voltage(be_current, L_val, h_val)
         fe_current = forward_euler(T_val, tau_val, L_val, alpha_val, h_val, t)
+        fe_v_L = inductor_voltage(fe_current, L_val, h_val)
         rk4_current = rk4(T_val, tau_val, L_val, alpha_val, h_val, t)
+        rk4_v_L = inductor_voltage(rk4_current, L_val, h_val)
         voltage = square_wave(t, T_val, alpha_val)
-        ax.plot(t, current, lw=2, label="Fourier Series")
-        ax.plot(t, be_current, lw=2, linestyle='--', label="Backward Euler")
-        ax.plot(t, fe_current, lw=2, linestyle='-.', label="Forward Euler")
-        ax.plot(t, rk4_current, lw=2, linestyle=':', label="RK4")
-        ax.plot(t, voltage, lw=2, label="Voltage V(t)")
-        ax.set_ylabel('Amplitude')
-        ax.set_title('Voltage and Current - All Methods')
-    
+        
+        ax.plot(t, voltage, lw=2, label="Input Voltage V(t)")
+        ax.plot(t, v_L, lw=2, label="Fourier Series - Inductor Voltage")
+        ax.plot(t, be_v_L, lw=2, label="Backward Euler - Inductor Voltage")
+        ax.plot(t, fe_v_L, lw=2, label="Forward Euler - Inductor Voltage")
+        ax.plot(t, rk4_v_L, lw=2, label="RK4 - Inductor Voltage")
+
+    ax.set_ylim(min(v_L) - abs(min(v_L)), max(v_L) + abs(max(v_L)))
+
     ax.set_xlabel('Time [s]')
     ax.grid(True)
     ax.legend()
-    
-#    # Set fixed y-limits
-#    if plot_type == "Voltage":
-#        #ax.set_ylim(-1, 11)
-#    else:
-#        #ax.set_ylim(0, 20)
-    ax.relim()
-    ax.autoscale_view()
+
+    # Set fixed y-limits
+    if plot_type == "Voltage":
+        ax.set_ylim(-1, 11)
+    else:
+        ax.set_ylim(-15, 15)
+
     fig.canvas.draw_idle()
 
 # Register the update function with each slider
@@ -302,15 +306,15 @@ def reset(event):
     h_slider.reset()
     n_slider.reset()
     global plot_type
-    plot_type = "All Numerical"
-    radio.set_active(4)  # Set to "All Numerical" by default
+    plot_type = "Fourier"
     update(None)
-    
+    radio.set_active(0)
 button.on_clicked(reset)
 
 # Add text explaining the equation
-equation_text = "Response of series RL circuit to square wave input"
+equation_text = "Using equations (0.20) and (0.21) from the image with τ = L/R"
 fig.text(0.5, 0.01, equation_text, ha='center', fontsize=10)
 
+update(None)
 plt.show()
 

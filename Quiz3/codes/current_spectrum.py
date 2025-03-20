@@ -6,13 +6,15 @@ from matplotlib.widgets import Slider, Button, RadioButtons
 # Define the Fourier spectrum function
 def fourier_spectrum(n, alpha, omega_0, tau, L):
     R = L / tau  # Calculate R from tau and L
-    num = np.sqrt(np.sin(2 * np.pi * n * alpha)**2 + ((1 - np.cos(2 * np.pi * n * alpha))**2)) / (R**2 + (L * (n * omega_0))**2)
-    Cn = 10 / (n * np.pi) * num
+    # num = np.sqrt(np.sin(2 * np.pi * n * alpha)**2 + ((1 - np.cos(2 * np.pi * n * alpha))**2)) / (R**2 + (L * (n * omega_0))**2)
+    #Cn = 10 / (n * np.pi) * num
+    Cn = abs(20/(np.pi*n)*np.sin(n*np.pi*alpha))
     return Cn
 
 # Define the Fourier phase spectrum function
 def fourier_phase(n, alpha):
-    phase = np.arctan((1 - np.cos(2 * np.pi * n * alpha)) / np.sin(2 * np.pi * n * alpha))
+    #phase = -np.arctan((1 - np.cos(2 * np.pi * n * alpha)) / np.sin(2 * np.pi * n * alpha))
+    phase = -np.arctan(np.tan(np.pi*n*alpha))
     return phase
 
 # Plotting the spectra

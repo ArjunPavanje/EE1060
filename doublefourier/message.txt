@@ -1,0 +1,68 @@
+```
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.fftpack import fft, fftfreq
+
+# Define frequencies and amplitude values
+w0 = 1   # Frequency of the modulating signal
+wc = 20  # Frequency of the carrier signal
+
+modulation_ratio = 0.8  # Modulation ratio
+carrier_amp = 1  # Amplitude of the carrier signal
+modulating_amp = modulation_ratio*carrier_amp  # Amplitude of the modulating signal
+
+# Define functions for carrier and modulating signals
+def carrier(A, w, t):
+    """
+    Generates a carrier waveform based on a modified cosine function.
+    This function creates a triangular waveform by transforming the cosine function.
+    """
+    return A - (2 * A / np.pi) * (np.arccos(np.cos(w * t - np.pi / 2)))
+
+def modulating(A, w, t):
+    """
+    Generates a sinusoidal modulating waveform.
+    """
+    return A * np.sin(w * t)
+
+def greater(t):
+    """
+    Compares the modulating signal with the carrier signal to generate a PWM output.
+    If the modulating signal is smaller than the carrier signal, output a high value (1.5), otherwise 0.
+    """
+    mod_signal = modulating(modulating_amp, w0, t)
+    carr_signal = carrier(carrier_amp, wc, t)
+    return 2 if mod_signal < carr_signal else 0
+
+# Generate time values
+#t = np.linspace(0, 1, 1000)  # Time vector with 1000 points from 0 to 1
+
+# Generate time values
+T = 2 * np.pi  # Total time duration (based on modulating signal period)
+N = 1000  # Number of samples
+t = np.linspace(0, T, N)
+
+# Compute PWM signal based on the comparison function
+pwm = np.array([greater(_) for _ in t])
+
+# Perform FFT to find dominant frequency
+pwm_fft = fft(pwm)
+frequencies = fftfreq(N, d=(T/N))  # Frequency components
+magnitudes = np.abs(pwm_fft)
+
+# Find the fundamental frequency
+fundamental_freq = frequencies[np.argmax(magnitudes[1:]) + 1]  # Exclude DC component
+fundamental_period = 1 / fundamental_freq
+print(fundamental_period/np.pi)
+
+# Plot results
+plt.plot(t, pwm, label="PWM Output")
+plt.plot(t, modulating(modulating_amp, w0, t), label="Modulating Signal")
+plt.plot(t, carrier(carrier_amp, wc, t), label="Carrier Signal")
+plt.legend()
+plt.xlabel("Time")
+plt.ylabel("Amplitude")
+plt.title("PWM Generation using Carrier and Modulating Signals")
+plt.grid()
+plt.show()
+```

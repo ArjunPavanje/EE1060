@@ -2,21 +2,21 @@ import matplotlib.pyplot as plt
 import numpy as np 
 
 wm = 5 # sin wave's frequency
-m = 4 # f_c = m f_m, m in N
+m = 4 # f_c = m f_m, m in n
 wc = m * wm # triangular wave's frequency 
 
-Ac = 1 # sin wave's amplitude
-mf = 0.1 # Ac = mf Am, mf < 1
-Am = mf * Ac 
+ac = 1 # sin wave's amplitude
+mf = 0.1 # ac = mf am, mf < 1
+am = mf * ac 
 
-def carrier(A, w, t): # triangular wave
-    return (A)-(2*A/(np.pi)*np.arccos(np.cos(w*t -(np.pi/2))))
+def carrier(a, w, t): # triangular wave
+    return (a)-(2*a/(np.pi)*np.arccos(np.cos(w*t -(np.pi/2))))
 
-def modulating(A, w, t): # sin wave
-    return A*np.sin(w*t)
+def modulating(a, w, t): # sin wave
+    return a*np.sin(w*t)
 
 def great(t):
-    if (carrier(Ac, wc, t) > modulating(Am, wm, t) ):
+    if (carrier(ac, wc, t) > modulating(am, wm, t) ):
         return 1.5
     else:
         return 0

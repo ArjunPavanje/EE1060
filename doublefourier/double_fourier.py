@@ -95,41 +95,8 @@ def double_fourier(out, t, T1, T2):
     amn = [[calculate_coefficient(m, n, 'amn') for n in range(1, N+1)] for m in range(1, M+1)]
     bmn = [[calculate_coefficient(m, n, 'bmn') for n in range(1, N+1)] for m in range(1, M+1)]
 
-    print(a00)
-    # Reconstruct the wave using the calculated coefficients
-    t1_vals = np.linspace(0, T1, 100)
-    t2_vals = np.linspace(0, T2, 100)
-    t = np.linspace(0, T2, 100)
-    j = 0
-    for i in t1_vals:
-        t[j] = a00 + a0n[j] + b0n[j] + am0 [j] + bm0[j] + amn[j] + bmn[j] + cmn[j] + dmn[j]
-        j+=1
-
-#    reconstructed_wave = np.zeros((len(t1_vals), len(t2_vals)))
-#    
-#    for i, t1 in enumerate(t1_vals):
-#        for j, t2 in enumerate(t2_vals):
-#            sum_terms = a00
-#            
-#            # Add a0n and b0n terms
-#            for n in range(1, N+1):
-#                sum_terms += a0n[n-1] * np.cos(2 * np.pi * n * t2 / T2)
-#                sum_terms += b0n[n-1] * np.sin(2 * np.pi * n * t2 / T2)
-#            
-#            # Add am0 and bm0 terms
-#            for m in range(1, M+1):
-#                sum_terms += am0[m-1] * np.cos(2 * np.pi * m * t1 / T1)
-#                sum_terms += bm0[m-1] * np.sin(2 * np.pi * m * t1 / T1)
-#            
-#            # Add amn and bmn terms
-#            for m in range(1, M+1):
-#                for n in range(1, N+1):
-#                    sum_terms += amn[m-1][n-1] * np.cos(2 * np.pi * m * t1 / T1) * np.cos(2 * np.pi * n * t2 / T2)
-#                    sum_terms += bmn[m-1][n-1] * np.sin(2 * np.pi * m * t1 / T1) * np.sin(2 * np.pi * n * t2 / T2)
-#            
-#            reconstructed_wave[i, j] = sum_terms
     
-    return a00, a0n, am0, b0n, bm0, cmn, dmn, amn, bmn, t, t1_vals, t2_vals
+    return a00, a0n, am0, b0n, bm0, cmn, dmn, amn, bmn
 
 
 def great(t):

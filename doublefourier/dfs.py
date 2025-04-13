@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np 
+from mpl_toolkits.mplot3d import Axes3D
+
 
 sin = np.sin
 cos = np.cos
 
-wm = 5 # sin wave's frequency
-m = 4 # f_c = m f_m, m in n
+wm = 1 # sin wave's frequency
+m = 3 # f_c = m f_m, m in n
 wc = m * wm # triangular wave's frequency 
 
 ac = 1 # sin wave's amplitude
@@ -23,7 +25,7 @@ def double_int(a, b, c, d, f):
 
 # mode: 0 -> a_mn, 1 -> b_mn, 2 -> c_mn, 3 -> d_mn
 def get_coeff(m, n, mode):
-    
+
     if mode == 0:
         # a_mn
         if m == 0 and n == 0:
@@ -76,9 +78,25 @@ def dfs_coeffecients(M, N):
             b_coeff_matrix[i][j] = get_coeff(i, j, 1)
             c_coeff_matrix[i][j] = get_coeff(i, j, 2)
             d_coeff_matrix[i][j] = get_coeff(i, j, 3)
+    print("A: \n", a_coeff_matrix)
+    print("B: \n", b_coeff_matrix)
+    print("C: \n", c_coeff_matrix)
+    print("D: \n", d_coeff_matrix)
+    # Save coefficient matrices to a text file
+    #a_coeff_matrix, b_coeff_matrix, c_coeff_matrix, d_coeff_matrix = coeff
 
+    coeff = (a_coeff_matrix, b_coeff_matrix, c_coeff_matrix, d_coeff_matrix)
+    with open("fourier_coefficients.txt", "w") as f:
+        f.write("a_coeff_matrix:\n")
+        np.savetxt(f, a_coeff_matrix, fmt="%.5f")
+        f.write("\n\nb_coeff_matrix:\n")
+        np.savetxt(f, b_coeff_matrix, fmt="%.5f")
+        f.write("\n\nc_coeff_matrix:\n")
+        np.savetxt(f, c_coeff_matrix, fmt="%.5f")
+        f.write("\n\nd_coeff_matrix:\n")
+        np.savetxt(f, d_coeff_matrix, fmt="%.5f")
     return a_coeff_matrix, b_coeff_matrix, c_coeff_matrix, d_coeff_matrix
-    
+
 
 def reconstruct_f(x, y, M, N, ceoff):
     """
@@ -88,55 +106,55 @@ def reconstruct_f(x, y, M, N, ceoff):
     # Calculate L1 and L2 (periods in x and y directions)
     L1 = 2*np.pi
     L2 = 2*np.pi
-    
+
     # Initialize the reconstruction with a00 term
     a00 = coeff[0][0][0]
     result = a00
-    
+
     # First sum: a0n terms
     for n in range(1, N):
         a0n = coeff[0][0][n]
         result += a0n * np.cos(2*np.pi*n*y/L2)
-    
+
     # Second sum: am0 terms
     for m in range(1, M):
         am0 = coeff[0][0][m]
         result += am0 * np.cos(2*np.pi*m*x/L1)
-    
+
     # Third sum: b0n terms
     for n in range(1, N):
         b0n = coeff[1][0][n]
         result += b0n * np.sin(2*np.pi*n*y/L2)
-    
+
     # Fourth sum: bm0 terms
     for m in range(1, M):
         bm0 = coeff[1][m][0]
         result += bm0 * np.sin(2*np.pi*m*x/L1)
-    
+
     # Fifth sum: cmn terms
     for n in range(1, N):
         for m in range(1, M):
             cmn = coeff[2][m][n]
             result += cmn * np.cos(2*np.pi*m*x/L1) * np.sin(2*np.pi*n*y/L2)
-    
+
     # Sixth sum: dmn terms
     for n in range(1, N):
         for m in range(1, M):
             dmn = ceoff[3][m][n]
             result += dmn * np.sin(2*np.pi*m*x/L1) * np.cos(2*np.pi*n*y/L2)
-    
+
     # Seventh sum: amn terms
     for n in range(1, N):
         for m in range(1, M):
             amn = coeff[0][m][n]
             result += amn * np.cos(2*np.pi*m*x/L1) * np.cos(2*np.pi*n*y/L2)
-    
+
     # Eighth sum: bmn terms
     for n in range(1, N):
         for m in range(1, M):
             bmn = coeff[1][m][n]
             result += bmn * np.sin(2*np.pi*m*x/L1) * np.sin(2*np.pi*n*y/L2)
-    
+
     return result
 
 def carrier(a, w, t): # triangular wave
@@ -162,7 +180,40 @@ coeff = dfs_coeffecients(M, N)
 out = [grate(_) for _ in t]
 out_re = [reconstruct_f(wc*_t, wm*_t, M, N, coeff) for _t in t]
 
-#plt.figure()
+'''
+# Assuming coeff[0] contains the a_coeff_matrix
+a_coeff_matrix = coeff[1]
+
+# Create the grid for c and d
+c = np.arange(0, M)
+d = np.arange(0, N)
+C, D = np.meshgrid(c, d)
+
+# Flatten the matrices for use in the plot
+C_flat = C.flatten()
+D_flat = D.flatten()
+a_coeff_flat = a_coeff_matrix.flatten()
+
+# Create the 3D plot
+fig = plt.figure(figsize=(10, 7))
+ax = fig.add_subplot(111, projection='3d')
+
+# Create a 3D stem plot
+#ax.stem(C_flat, D_flat, a_coeff_flat, basefmt=" ", linefmt="b-", markerfmt="bo")
+
+# Set labels and title
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('b_mn coeffecients')
+ax.set_title('b_mn coeffecients')
+
+# Show the plot
+plt.show()
+'''
+
+
+
+plt.figure()
 plt.plot(t, out, label = 'PWM output')
 plt.plot(t, out_re, label = 'PWM reconstruction output')
 plt.legend()

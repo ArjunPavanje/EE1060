@@ -20,7 +20,7 @@ def modulating(A, w, t): # sin wave
 
 
 def double_fourier(out, t, T1, T2):
-    N = M = 10  # Number of harmonics to consider
+    N = M = 20  # Number of harmonics to consider
     
     def f(t1, t2):
         idx = int(t1 / (T1 / len(t)))

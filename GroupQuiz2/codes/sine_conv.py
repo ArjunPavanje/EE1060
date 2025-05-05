@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import fftconvolve
@@ -54,10 +53,17 @@ plt.setp(radio.labels, fontsize=10)
 reset_ax = plt.axes([0.05, 0.4, 0.1, 0.04])
 reset_btn = Button(reset_ax, 'Reset')
 
+# Create compare button
+compare_ax = plt.axes([0.05, 0.35, 0.1, 0.04])
+compare_btn = Button(compare_ax, 'Compare All')
+
 # Track convolution type
 current_case = 'standard'
+compare_mode = [False]  # Use list to allow modification in nested functions
 
 def update(val):
+    if compare_mode[0]:
+        return  # Don't update single plots if in compare mode
     A = s_A.val
     w = s_w.val
     phi = s_phi.val
@@ -77,8 +83,7 @@ def update(val):
         conv = fftconvolve(sig, kern, mode='same') * (t[1] - t[0])
         xlim_left = min(-10, t0 - T) - 2
         xlim_right = max(10, t0 + T) + 2
-    elif current_case == 'tpos':
-        # Analytical solution for right half kernel
+    elif current_case == 't>0' or current_case == 'tpos':
         conv = (A/w) * (np.cos(w*(t - T) + phi) - np.cos(w*t + phi))
         xlim_left = min(-10, 0) - 2
         xlim_right = max(10, T) + 2
@@ -88,6 +93,7 @@ def update(val):
     line_sig.set_ydata(sig)
     ax.set_xlim(xlim_left, xlim_right)
     ax.set_ylim(-1.5*(A+T), 1.5*(A+T))
+    ax.legend()
     fig.canvas.draw_idle()
 
 # Connect sliders
@@ -100,7 +106,20 @@ s_T.on_changed(update)
 # Radio button handler
 def mode_handler(label):
     global current_case
-    current_case = label.lower()
+    if label.lower() == 't>0':
+        current_case = 't>0'
+    else:
+        current_case = label.lower()
+    compare_mode[0] = False
+    # Restore only the two main lines
+    ax.clear()
+    ax.set_ylim(-5, 5)
+    line_conv, = ax.plot(t, np.zeros_like(t), lw=2, label='Convolution')
+    line_sig, = ax.plot(t, np.zeros_like(t), lw=2, linestyle='--', label='Original Sine')
+    ax.legend()
+    # Update lines globally
+    globals()['line_conv'] = line_conv
+    globals()['line_sig'] = line_sig
     update(None)
 
 radio.on_clicked(mode_handler)
@@ -115,8 +134,45 @@ def reset(event):
     radio.set_active(0)
     global current_case
     current_case = 'standard'
+    compare_mode[0] = False
+    # Restore only the two main lines
+    ax.clear()
+    ax.set_ylim(-5, 5)
+    line_conv, = ax.plot(t, np.zeros_like(t), lw=2, label='Convolution')
+    line_sig, = ax.plot(t, np.zeros_like(t), lw=2, linestyle='--', label='Original Sine')
+    ax.legend()
+    # Update lines globally
+    globals()['line_conv'] = line_conv
+    globals()['line_sig'] = line_sig
     update(None)
 
 reset_btn.on_clicked(reset)
+
+# Compare all handler
+def compare_all(event):
+    compare_mode[0] = True
+    A = s_A.val
+    w = s_w.val
+    phi = s_phi.val
+    t0 = s_t0.val
+    T = s_T.val
+    
+    sig = signal(t, A, w, phi)
+    conv_standard = fftconvolve(sig, box_kernel(t, T, 0), mode='same') * (t[1] - t[0])
+    conv_shifted = fftconvolve(sig, box_kernel(t, T, t0), mode='same') * (t[1] - t[0])
+    conv_tpos = (A/w) * (np.cos(w*(t - T) + phi) - np.cos(w*t + phi))
+    
+    ax.clear()
+    ax.plot(t, conv_standard, lw=2, label='Standard')
+    ax.plot(t, conv_shifted, lw=2, label='Shifted')
+    ax.plot(t, conv_tpos, lw=2, label='t>0')
+    ax.plot(t, sig, lw=2, linestyle='--', label='Original Sine')
+    ax.set_ylim(-1.5*(A+T), 1.5*(A+T))
+    ax.set_xlim(-32, 32)
+    ax.legend()
+    ax.set_title('Comparison of Convolution Outputs')
+    fig.canvas.draw_idle()
+
+compare_btn.on_clicked(compare_all)
 
 plt.show()

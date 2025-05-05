@@ -47,10 +47,18 @@ plt.setp(radio.labels, fontsize=10)
 reset_ax = plt.axes([0.05, 0.4, 0.1, 0.04])
 reset_btn = Button(reset_ax, 'Reset')
 
-# Track convolution type
+# Create compare button
+compare_ax = plt.axes([0.05, 0.35, 0.1, 0.04])
+compare_btn = Button(compare_ax, 'Compare All')
+
+# Track convolution type and compare mode
 current_case = 'standard'
+compare_mode = [False]  # Use list to make it mutable within nested functions
 
 def update(val):
+    if compare_mode[0]:
+        return  # Don't update if in compare mode
+        
     a = s_a.val
     T = s_T.val
     t0 = s_t0.val
@@ -84,6 +92,14 @@ s_t0.on_changed(update)
 def mode_handler(label):
     global current_case
     current_case = label.lower()
+    compare_mode[0] = False
+    # Restore only the two main lines
+    ax.clear()
+    global line_conv, line_sig
+    line_conv, = ax.plot(t, np.zeros_like(t), lw=2, label='Convolution')
+    line_sig, = ax.plot(t, np.zeros_like(t), lw=2, linestyle='--', label=r'$e^{at}$')
+    ax.legend()
+    ax.set_xlabel('Time')
     update(None)
 
 radio.on_clicked(mode_handler)
@@ -96,9 +112,53 @@ def reset(event):
     radio.set_active(0)
     global current_case
     current_case = 'standard'
+    compare_mode[0] = False
+    # Restore only the two main lines
+    ax.clear()
+    global line_conv, line_sig
+    line_conv, = ax.plot(t, np.zeros_like(t), lw=2, label='Convolution')
+    line_sig, = ax.plot(t, np.zeros_like(t), lw=2, linestyle='--', label=r'$e^{at}$')
+    ax.legend()
+    ax.set_xlabel('Time')
     update(None)
 
 reset_btn.on_clicked(reset)
+
+# Compare all handler
+def compare_all(event):
+    compare_mode[0] = True
+    a = s_a.val
+    T = s_T.val
+    t0 = s_t0.val
+    
+    sig = signal(t, a)
+    
+    # Calculate all three types of convolutions
+    conv_standard = (2 * np.exp(a * t) / a) * np.sinh(a * T)
+    conv_shifted = (2 * np.exp(a * (t - t0)) / a) * np.sinh(a * T)
+    conv_tpos = (np.exp(a * t) / a) * (1 - np.exp(-a * T))
+    
+    # Clear the plot and draw all convolutions
+    ax.clear()
+    ax.plot(t, conv_standard, lw=2, label='Standard')
+    ax.plot(t, conv_shifted, lw=2, label='Shifted')
+    ax.plot(t, conv_tpos, lw=2, label='t>0')
+    ax.plot(t, sig, lw=2, linestyle='--', label=r'$e^{at}$')
+    
+    # Set appropriate axis limits to show all convolutions
+    min_x = min(-10, t0-10, -2)
+    max_x = max(10, t0+10, 10)
+    ax.set_xlim(min_x, max_x)
+    
+    max_y = max(np.max(conv_standard), np.max(conv_shifted), np.max(conv_tpos))
+    ax.set_ylim(-0.5, 1.5*max_y)
+    
+    ax.legend()
+    ax.set_xlabel('Time')
+    ax.set_title('Comparison of All Convolution Types')
+    fig.canvas.draw_idle()
+
+compare_btn.on_clicked(compare_all)
 
 update(None)  # Initial update
 plt.show()
